@@ -8,6 +8,7 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             display: flex;
+            flex-direction: column; /* Розташовуємо елементи в колонку */
             justify-content: center;
             align-items: center;
             text-align: center;
@@ -16,11 +17,23 @@
             color: var(--tg-theme-text-color, #000000);
             background-color: var(--tg-theme-bg-color, #ffffff);
         }
+        #send-data-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: var(--tg-theme-button-text-color, #ffffff);
+            background-color: var(--tg-theme-button-color, #007bff);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
 
     <h1 id="greeting">Загрузка...</h1>
+
+    <button id="send-data-btn">Надіслати привіт боту 👋</button>
     
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
@@ -28,12 +41,21 @@
             let tg = window.Telegram.WebApp;
             let user = tg.initDataUnsafe?.user;
             let greetingElement = document.getElementById('greeting');
+            let sendButton = document.getElementById('send-data-btn');
 
             if (user) {
                 greetingElement.innerText = `Добро пожаловать, ${user.first_name}! 👋`;
             } else {
                 greetingElement.innerText = 'Добро пожаловать в ваш Mini App! 🎉';
             }
+
+            // Цей блок відповідає за натискання кнопки
+            sendButton.addEventListener('click', function() {
+                // Надсилаємо текстові дані боту
+                tg.sendData("Привіт від Mini App!");
+                // Закриваємо Mini App
+                tg.close();
+            });
         });
     </script>
 </body>
