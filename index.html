@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,12 +10,31 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            text-align: center;
             height: 100vh;
             margin: 0;
+            color: var(--tg-theme-text-color, #000000);
+            background-color: var(--tg-theme-bg-color, #ffffff);
         }
     </style>
 </head>
 <body>
-    <h1>Вітаю у вашому Mini App! 🎉</h1>
+
+    <h1 id="greeting">Загрузка...</h1>
+    
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let tg = window.Telegram.WebApp;
+            let user = tg.initDataUnsafe?.user;
+            let greetingElement = document.getElementById('greeting');
+
+            if (user) {
+                greetingElement.innerText = `Добро пожаловать, ${user.first_name}! 👋`;
+            } else {
+                greetingElement.innerText = 'Добро пожаловать в ваш Mini App! 🎉';
+            }
+        });
+    </script>
 </body>
 </html>
