@@ -16,85 +16,51 @@
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 15px;
-            color: var(--text-color);
-            background-color: var(--bg-color);
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            box-sizing: border-box;
+            margin: 0; padding: 15px; color: var(--text-color); background-color: var(--bg-color);
+            display: flex; flex-direction: column; height: 100vh; box-sizing: border-box;
         }
         .nav {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 20px;
-            background-color: var(--secondary-bg-color);
-            border-radius: 10px;
-            padding: 5px;
+            display: flex; justify-content: space-around; margin-bottom: 20px;
+            background-color: var(--secondary-bg-color); border-radius: 10px; padding: 5px;
         }
         .nav-btn {
-            flex-grow: 1;
-            padding: 10px;
-            border: none;
-            background-color: transparent;
-            color: var(--hint-color);
-            font-size: 16px;
-            border-radius: 7px;
-            cursor: pointer;
+            flex-grow: 1; padding: 10px; border: none; background-color: transparent;
+            color: var(--hint-color); font-size: 16px; border-radius: 7px; cursor: pointer;
         }
-        .nav-btn.active {
-            color: var(--button-text-color);
-            background-color: var(--button-color);
-        }
-        .tab-content {
-            display: none;
-            flex-grow: 1;
-        }
-        .tab-content.active {
-            display: block;
-        }
+        .nav-btn.active { color: var(--button-text-color); background-color: var(--button-color); }
+        .tab-content { display: none; flex-grow: 1; }
+        .tab-content.active { display: block; }
         h2 { margin-top: 0; }
-        p { color: var(--hint-color); }
-        .input-group {
-            margin: 20px 0;
-        }
-        input[type="text"], input[type="file"] {
-            width: 100%;
-            padding: 12px;
-            box-sizing: border-box;
-            border: 1px solid var(--hint-color);
-            border-radius: 8px;
-            background-color: var(--secondary-bg-color);
-            color: var(--text-color);
-            font-size: 16px;
+        p { color: var(--hint-color); line-height: 1.5; }
+        .input-group { margin: 20px 0; }
+        input[type="text"] {
+            width: 100%; padding: 12px; box-sizing: border-box; border: 1px solid var(--hint-color);
+            border-radius: 8px; background-color: var(--secondary-bg-color); color: var(--text-color); font-size: 16px;
         }
         .btn {
-            width: 100%;
-            padding: 12px;
-            font-size: 16px;
-            font-weight: bold;
-            color: var(--button-text-color);
-            background-color: var(--button-color);
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-top: 10px;
+            width: 100%; padding: 12px; font-size: 16px; font-weight: bold;
+            color: var(--button-text-color); background-color: var(--button-color);
+            border: none; border-radius: 8px; cursor: pointer; margin-top: 10px;
         }
+        .profile-info, .youtube-results { background-color: var(--secondary-bg-color); border-radius: 10px; padding: 15px; }
+        .loader { text-align: center; padding: 20px; display: none; }
+        .result-btn { margin-top: 10px; }
     </style>
 </head>
 <body>
 
     <div class="nav">
-        <button class="nav-btn active" data-tab="profile">Профіль</button>
+        <button class="nav-btn active" data-tab="profile">Профиль</button>
         <button class="nav-btn" data-tab="youtube">YouTube</button>
         <button class="nav-btn" data-tab="converter">Конвертер</button>
     </div>
 
     <div id="profile" class="tab-content active">
         <h2 id="greeting">Загрузка...</h2>
-        <p id="user-status">Статус: ...</p>
-        <p id="user-limit">Лимит: ... сек.</p>
+        <div class="profile-info">
+            <p><strong>Статус:</strong> <span id="user-status">...</span></p>
+            <p><strong>Лимит / Срок:</strong> <span id="user-detail">...</span></p>
+        </div>
     </div>
 
     <div id="youtube" class="tab-content">
@@ -103,13 +69,16 @@
             <input type="text" id="youtube-url" placeholder="Вставьте ссылку на видео...">
             <button id="get-yt-info-btn" class="btn">Получить информацию</button>
         </div>
-        <p>После нажатия бот получит ссылку и предложит варианты в чате.</p>
+        <div class="loader" id="yt-loader">Загрузка информации о видео...</div>
+        <div class="youtube-results" id="yt-results" style="display: none;">
+            <h3 id="yt-title"></h3>
+            <div id="yt-options"></div>
+        </div>
     </div>
 
     <div id="converter" class="tab-content">
         <h2>Конвертер файлов</h2>
         <p>Чтобы конвертировать аудио или видео файл, просто отправьте его напрямую в чат с ботом.</p>
-        <p>Загрузка файлов через Mini App пока не поддерживается.</p>
     </div>
 
     <script>
@@ -117,18 +86,9 @@
             const tg = window.Telegram.WebApp;
             tg.expand();
 
-            const greetingElement = document.getElementById('greeting');
-            const userStatusElement = document.getElementById('user-status');
-            const userLimitElement = document.getElementById('user-limit');
             const user = tg.initDataUnsafe?.user;
 
-            if (user) {
-                greetingElement.innerText = `Привет, ${user.first_name}!`;
-            } else {
-                greetingElement.innerText = 'Добро пожаловать!';
-            }
-
-            // Навигация по вкладкам
+            // --- Навигация ---
             const navButtons = document.querySelectorAll('.nav-btn');
             const tabContents = document.querySelectorAll('.tab-content');
             navButtons.forEach(button => {
@@ -140,28 +100,79 @@
                 });
             });
 
-            // Логика YouTube
+            // --- Логика YouTube ---
             const getYtInfoBtn = document.getElementById('get-yt-info-btn');
             const youtubeUrlInput = document.getElementById('youtube-url');
+            const ytLoader = document.getElementById('yt-loader');
+            const ytResults = document.getElementById('yt-results');
+            const ytTitle = document.getElementById('yt-title');
+            const ytOptions = document.getElementById('yt-options');
+
             getYtInfoBtn.addEventListener('click', () => {
                 const url = youtubeUrlInput.value;
                 if (url) {
-                    const dataToSend = {
-                        action: 'get_youtube_info',
-                        url: url
-                    };
-                    tg.sendData(JSON.stringify(dataToSend));
-                    tg.close();
+                    ytLoader.style.display = 'block';
+                    ytResults.style.display = 'none';
+                    tg.sendData(JSON.stringify({ action: 'get_youtube_info', url: url }));
                 } else {
                     tg.showAlert('Пожалуйста, вставьте ссылку.');
                 }
             });
 
-            // Запрос данных о профиле у бота
-            // Примечание: для этого нужна более сложная логика, пока просто заглушка
-            userStatusElement.innerText = "Статус: Неизвестно";
-            userLimitElement.innerText = "Лимит: ... сек.";
+            // --- Логика Профиля ---
+            const greetingElement = document.getElementById('greeting');
+            const userStatusElement = document.getElementById('user-status');
+            const userDetailElement = document.getElementById('user-detail');
 
+            if (user) {
+                greetingElement.innerText = `Привет, ${user.first_name}!`;
+            } else {
+                greetingElement.innerText = 'Добро пожаловать!';
+            }
+
+            // Слушаем ответы от бота
+            tg.onEvent('web_app_data_received', function(eventData) {
+                try {
+                    const data = JSON.parse(eventData.data);
+                    if (data.action === 'profile_data') {
+                        // Обновляем профиль
+                        if (data.status === 'premium') {
+                            userStatusElement.innerText = "⭐ Premium";
+                            userDetailElement.innerText = `Действителен до: ${data.expires_at}`;
+                        } else {
+                            userStatusElement.innerText = "🆓 Бесплатный";
+                            userDetailElement.innerText = `Лимит: ${data.limit} сек.`;
+                        }
+                    } else if (data.action === 'youtube_info_result') {
+                        // Показываем результаты для YouTube
+                        ytLoader.style.display = 'none';
+                        ytTitle.innerText = data.title;
+                        ytOptions.innerHTML = ''; // Очищаем старые кнопки
+
+                        data.options.forEach(option => {
+                            const button = document.createElement('button');
+                            button.innerText = option.text;
+                            button.className = 'btn result-btn';
+                            button.onclick = () => {
+                                tg.sendData(JSON.stringify({
+                                    action: 'download_youtube',
+                                    url: data.url,
+                                    quality: option.quality,
+                                    type: option.type
+                                }));
+                                tg.close();
+                            };
+                            ytOptions.appendChild(button);
+                        });
+                        ytResults.style.display = 'block';
+                    }
+                } catch (e) {
+                    console.error('Ошибка парсинга данных от бота:', e);
+                }
+            });
+
+            // Сразу после загрузки, просим у бота данные профиля
+            tg.sendData(JSON.stringify({ action: 'get_profile_data' }));
         });
     </script>
 </body>
